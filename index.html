@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RareVehiclesVault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75,500..800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAFAF8; --ink:#141517; --ink-soft:#4A4C50; --rule:#D8D7D2;
+  --accent:#2450B8; --buy:#0B7A3E; --good:#8A6D00; --skip:#9C2A1F;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --disp:'Archivo',system-ui,sans-serif;
+  --body:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+a{color:var(--accent)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px 80px}
+
+/* masthead — sticker header bar */
+.mast{background:var(--ink);color:var(--paper);margin:0 -20px;padding:18px 20px 14px;
+  display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+.mast h1{font-family:var(--disp);font-stretch:75%;font-weight:800;font-size:26px;
+  letter-spacing:.06em;text-transform:uppercase}
+.mast .stamp{font-family:var(--mono);font-size:12px;color:#B9BAB6}
+
+/* search tabs */
+.tabs{display:flex;gap:0;border-bottom:3px solid var(--ink);margin-top:26px;flex-wrap:wrap}
+.tab{font-family:var(--disp);font-stretch:75%;font-weight:700;text-transform:uppercase;
+  letter-spacing:.05em;font-size:14px;padding:10px 18px;border:none;background:none;
+  cursor:pointer;color:var(--ink-soft)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.tab:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+
+/* stats strip — sticker spec boxes */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  border:2px solid var(--ink);border-top:none;margin-bottom:34px}
+.stat{padding:14px 16px 12px;border-right:1px solid var(--rule)}
+.stat:last-child{border-right:none}
+.stat .k{font-family:var(--disp);font-stretch:75%;font-weight:700;font-size:11px;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft)}
+.stat .v{font-family:var(--mono);font-weight:600;font-size:22px;margin-top:2px}
+.stat .u{font-size:12px;color:var(--ink-soft);font-family:var(--mono)}
+
+/* section labels */
+.seclabel{font-family:var(--disp);font-stretch:75%;font-weight:800;font-size:13px;
+  text-transform:uppercase;letter-spacing:.1em;background:var(--ink);color:var(--paper);
+  display:inline-block;padding:5px 12px 4px;margin-bottom:0}
+
+/* vehicle rows */
+.cars{border:2px solid var(--ink)}
+.car{display:grid;grid-template-columns:96px 1fr auto;gap:16px;padding:16px;
+  border-bottom:1px solid var(--rule);cursor:pointer;align-items:start}
+.car:last-child{border-bottom:none}
+.car:hover{background:#F1F0EB}
+.car:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+.rowactions{display:flex;flex-direction:column;gap:8px;align-self:center;align-items:stretch}
+.golink{font-family:var(--disp);font-stretch:75%;font-weight:800;font-size:12px;
+  text-transform:uppercase;letter-spacing:.06em;padding:6px 10px;border:2px solid var(--accent);
+  color:var(--accent);text-decoration:none;text-align:center;white-space:nowrap}
+.golink:hover{background:var(--accent);color:var(--paper)}
+.nolink{font-family:var(--mono);font-size:10px;color:var(--ink-soft);text-align:center}
+.scorechip{background:var(--ink);color:var(--paper);font-family:var(--mono);
+  text-align:center;padding:10px 6px 8px;align-self:center}
+.scorechip .n{font-size:30px;font-weight:600;line-height:1}
+.scorechip .lbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#B9BAB6;margin-top:4px}
+.car h3{font-family:var(--disp);font-stretch:75%;font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.02em}
+.vin{font-family:var(--mono);font-size:12px;color:var(--ink-soft);letter-spacing:.12em;margin-top:2px}
+.carmeta{font-family:var(--mono);font-size:13px;margin-top:6px;color:var(--ink)}
+.carmeta b{font-weight:600}
+.dealer{font-size:13px;color:var(--ink-soft);margin-top:2px}
+.rec{font-family:var(--disp);font-stretch:75%;font-weight:800;font-size:13px;
+  text-transform:uppercase;letter-spacing:.06em;padding:5px 10px 4px;border:2px solid;align-self:center;white-space:nowrap}
+.rec.buy{color:var(--buy);border-color:var(--buy)}
+.rec.good{color:var(--good);border-color:var(--good)}
+.rec.skip{color:var(--skip);border-color:var(--skip)}
+.rec.sold{color:var(--ink-soft);border-color:var(--ink-soft)}
+.empty{padding:36px 20px;text-align:center;color:var(--ink-soft)}
+.empty b{font-family:var(--disp);font-stretch:75%;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+/* detail drawer */
+.detail{border:2px solid var(--ink);border-top:none;padding:20px;display:none}
+.detail.open{display:block}
+.detail h4{font-family:var(--disp);font-stretch:75%;font-weight:800;font-size:13px;
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.hist-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin-top:14px}
+.hist-table th{font-family:var(--disp);font-stretch:75%;text-transform:uppercase;font-size:11px;
+  letter-spacing:.08em;text-align:left;border-bottom:2px solid var(--ink);padding:4px 10px 4px 0}
+.hist-table td{border-bottom:1px solid var(--rule);padding:5px 10px 5px 0}
+svg .axis{stroke:var(--rule);stroke-width:1}
+svg .line{stroke:var(--accent);stroke-width:2;fill:none}
+svg .dot{fill:var(--accent)}
+svg text{font-family:var(--mono);font-size:10px;fill:var(--ink-soft)}
+
+/* alerts feed */
+.alerts{margin-top:40px}
+.alert{display:grid;grid-template-columns:120px 110px 1fr;gap:12px;padding:9px 0;
+  border-bottom:1px solid var(--rule);font-size:13.5px;align-items:baseline}
+.alert time{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+.kind{font-family:var(--disp);font-stretch:75%;font-weight:800;font-size:11px;
+  text-transform:uppercase;letter-spacing:.06em}
+.kind.NEW{color:var(--accent)} .kind.PRICE_DROP{color:var(--buy)}
+.kind.PRICE_INCREASE{color:var(--good)} .kind.SOLD{color:var(--ink-soft)}
+.kind.RELISTED{color:var(--good)} .kind.UNICORN{color:var(--skip)}
+footer{margin-top:56px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
+@media (max-width:640px){
+  .car{grid-template-columns:72px 1fr}
+  .rowactions{grid-column:2;flex-direction:row;justify-self:start;margin-top:4px}
+  .alert{grid-template-columns:1fr;gap:2px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .car{transition:background .12s ease}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <h1>RareVehiclesVault</h1>
+    <span class="stamp" id="stamp">loading…</span>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Saved searches"></nav>
+  <section class="stats" id="stats" aria-label="Market summary"></section>
+
+  <span class="seclabel">Active listings — ranked by score</span>
+  <div class="cars" id="cars" role="list"></div>
+  <div class="detail" id="detail" aria-live="polite"></div>
+
+  <section class="alerts">
+    <span class="seclabel">Alert log</span>
+    <div id="alerts"></div>
+  </section>
+
+  <footer>Data refreshes with every scheduled hunt. Scores are estimates from listing text and market position — verify history and condition before buying.</footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.VAULT_DATA;
+  if(!D){ document.getElementById('stamp').textContent = 'data.js missing — run a hunt first'; return; }
+  var fmt$ = function(n){ return n==null ? '—' : '$'+Math.round(n).toLocaleString(); };
+  var fmtN = function(n){ return n==null ? '—' : Math.round(n).toLocaleString(); };
+  var httpUrl = function(u){ return (u&&/^https?:\/\//i.test(u)) ? u : ''; };
+  var esc = function(s){ var d=document.createElement('span'); d.textContent=s==null?'':String(s); return d.innerHTML; };
+  document.getElementById('stamp').textContent = 'certified ' + D.generated_at.slice(0,16).replace('T',' ') + ' UTC';
+
+  var current = D.searches.findIndex(function(s){return s.active;});
+  if(current<0) current=0;
+  var openKey = null;
+
+  function recClass(v){
+    if(v.status!=='ACTIVE') return 'sold';
+    if(v.score>=90) return 'buy';
+    if(v.score>=70) return 'good';
+    return 'skip';
+  }
+
+  function renderTabs(){
+    var el=document.getElementById('tabs'); el.innerHTML='';
+    D.searches.forEach(function(s,i){
+      var b=document.createElement('button');
+      b.className='tab'; b.setAttribute('role','tab');
+      b.setAttribute('aria-selected', i===current?'true':'false');
+      b.textContent=s.name;
+      b.onclick=function(){ current=i; openKey=null; render(); };
+      el.appendChild(b);
+    });
+  }
+
+  function renderStats(){
+    var s=D.searches[current].stats||{}; var el=document.getElementById('stats');
+    var cells=[
+      ['Active listings', fmtN(s.active_listings), ''],
+      ['Median asking', fmt$(s.median_price), ''],
+      ['Lowest asking', fmt$(s.min_price), ''],
+      ['Avg mileage', fmtN(s.avg_mileage), 'mi'],
+      ['Avg days listed', s.avg_days_on_market!=null?s.avg_days_on_market:'—',''],
+      ['Avg score', s.avg_score!=null?s.avg_score:'—','/100']
+    ];
+    el.innerHTML=cells.map(function(c){
+      return '<div class="stat"><div class="k">'+c[0]+'</div><div class="v">'+esc(c[1])+
+             (c[2]?' <span class="u">'+c[2]+'</span>':'')+'</div></div>';
+    }).join('');
+  }
+
+  function chartSVG(hist){
+    var pts=hist.filter(function(h){return h.price!=null;});
+    if(pts.length<2) return '<p style="color:var(--ink-soft);font-size:13px">Price history builds as future hunts observe this VIN.</p>';
+    var W=560,H=150,P=38;
+    var prices=pts.map(function(p){return p.price;});
+    var lo=Math.min.apply(null,prices), hi=Math.max.apply(null,prices);
+    if(hi===lo){hi+=1;lo-=1;}
+    var x=function(i){return P+(W-P-10)*(i/(pts.length-1));};
+    var y=function(v){return 12+(H-34)*(1-(v-lo)/(hi-lo));};
+    var path=pts.map(function(p,i){return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.price).toFixed(1);}).join(' ');
+    var dots=pts.map(function(p,i){return '<circle class="dot" cx="'+x(i).toFixed(1)+'" cy="'+y(p.price).toFixed(1)+'" r="3"><title>'+esc(p.at)+' — '+fmt$(p.price)+'</title></circle>';}).join('');
+    return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Asking price over time" style="width:100%;max-width:'+W+'px">'+
+      '<line class="axis" x1="'+P+'" y1="'+(H-22)+'" x2="'+(W-10)+'" y2="'+(H-22)+'"/>'+
+      '<text x="2" y="'+(y(hi)+4)+'">'+fmt$(hi)+'</text><text x="2" y="'+(y(lo)+4)+'">'+fmt$(lo)+'</text>'+
+      '<text x="'+P+'" y="'+(H-8)+'">'+esc(pts[0].at)+'</text>'+
+      '<text x="'+(W-10)+'" y="'+(H-8)+'" text-anchor="end">'+esc(pts[pts.length-1].at)+'</text>'+
+      '<path class="line" d="'+path+'"/>'+dots+'</svg>';
+  }
+
+  function renderDetail(){
+    var el=document.getElementById('detail');
+    if(!openKey){ el.className='detail'; el.innerHTML=''; return; }
+    var v=D.searches[current].vehicles.find(function(x){return x.key===openKey;});
+    if(!v){ el.className='detail'; return; }
+    var rows=v.history.slice(-12).reverse().map(function(h){
+      return '<tr><td>'+esc(h.at)+'</td><td>'+fmt$(h.price)+'</td><td>'+fmtN(h.mileage)+'</td><td>'+esc(h.dealer)+'</td></tr>';
+    }).join('');
+    el.className='detail open';
+    el.innerHTML='<h4>Price history — '+esc(v.vin||v.key)+'</h4>'+chartSVG(v.history)+
+      '<table class="hist-table"><thead><tr><th>Observed</th><th>Asking</th><th>Miles</th><th>Seller</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<p style="margin-top:12px">'+
+      (httpUrl(v.url)?'<a href="'+esc(httpUrl(v.url))+'" target="_blank" rel="noopener">Open original listing ↗</a>':'')+
+      (httpUrl(v.carfax)?'&nbsp;&nbsp;<a href="'+esc(httpUrl(v.carfax))+'" target="_blank" rel="noopener">Carfax report ↗</a>':'')+
+      '</p>';
+  }
+
+  function carName(v){
+    var toks=[v.year,v.make,v.model,v.trim].filter(Boolean).join(' ').split(/\s+/);
+    var out=[];
+    toks.forEach(function(t){ if(out[out.length-1]!==t) out.push(t); });
+    return out.join(' ');
+  }
+
+  function renderCars(){
+    var vs=D.searches[current].vehicles;
+    var el=document.getElementById('cars'); el.innerHTML='';
+    if(!vs.length){
+      var noun=(D.searches[current].kind==='vehicle')?'vehicles':'units';
+      el.innerHTML='<div class="empty"><b>No '+noun+' observed yet</b>Add source API keys or log a find in reports/manual_listings.csv — the next hunt fills this in.</div>';
+      return;
+    }
+    vs.forEach(function(v){
+      var b=document.createElement('div');
+      b.className='car'; b.setAttribute('role','listitem'); b.tabIndex=0;
+      b.setAttribute('aria-expanded', v.key===openKey?'true':'false');
+      var vurl = httpUrl(v.url);
+      var link = vurl
+        ? '<a class="golink" href="'+esc(vurl)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View listing ↗</a>'
+        : '<span class="nolink">no link from source</span>';
+      b.innerHTML=
+        '<div class="scorechip"><div class="n">'+(v.score!=null?v.score:'—')+'</div><div class="lbl">score</div></div>'+
+        '<div><h3>'+esc(carName(v))+'</h3>'+
+        '<div class="vin">'+esc(v.vin||(D.searches[current].kind==='vehicle'?'VIN pending':''))+'</div>'+
+        '<div class="carmeta"><b>'+fmt$(v.price)+'</b>'+(v.mileage!=null?' · '+fmtN(v.mileage)+' mi':'')+' · listed '+esc(v.first_seen)+'</div>'+
+        '<div class="dealer">'+esc(v.dealer)+'</div></div>'+
+        '<div class="rowactions"><span class="rec '+recClass(v)+'">'+esc(v.status==='ACTIVE'?(v.recommendation||'—'):v.status)+'</span>'+link+'</div>';
+      var toggle=function(){ openKey = (openKey===v.key? null : v.key); render(); };
+      b.onclick=toggle;
+      b.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } };
+      el.appendChild(b);
+    });
+  }
+
+  function renderAlerts(){
+    var el=document.getElementById('alerts');
+    var evs=D.events.filter(function(e){return e.search_id===D.searches[current].id || !e.search_id;});
+    if(!evs.length){ el.innerHTML='<div class="empty">No alerts yet — they appear here as hunts observe changes.</div>'; return; }
+    el.innerHTML=evs.slice(0,40).map(function(e){
+      return '<div class="alert"><time>'+esc(e.at)+'</time><span class="kind '+esc(e.kind)+'">'+esc(e.kind.replace('_',' '))+'</span>'+
+             '<span>'+esc(e.vehicle)+' '+esc(e.detail)+'</span></div>';
+    }).join('');
+  }
+
+  function render(){ renderTabs(); renderStats(); renderCars(); renderDetail(); renderAlerts(); }
+  render();
+})();
+</script>
+</body>
+</html>
