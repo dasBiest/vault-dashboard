@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>RareVehiclesVault</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75,500..800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -77,6 +78,11 @@ a{color:var(--accent)}
 .rec.good{color:var(--good);border-color:var(--good)}
 .rec.skip{color:var(--skip);border-color:var(--skip)}
 .rec.sold{color:var(--ink-soft);border-color:var(--ink-soft)}
+.yearhead{font-family:var(--disp);font-stretch:75%;font-weight:800;font-size:14px;
+  letter-spacing:.08em;background:var(--ink);color:var(--paper);padding:7px 14px 6px}
+.datehead{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-soft);padding:8px 14px 6px;border-bottom:1px solid var(--rule);background:#F1F0EB}
+.datehead b{color:var(--ink)}
 .empty{padding:36px 20px;text-align:center;color:var(--ink-soft)}
 .empty b{font-family:var(--disp);font-stretch:75%;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
 
@@ -125,7 +131,7 @@ footer{margin-top:56px;font-family:var(--mono);font-size:11.5px;color:var(--ink-
   <nav class="tabs" id="tabs" role="tablist" aria-label="Saved searches"></nav>
   <section class="stats" id="stats" aria-label="Market summary"></section>
 
-  <span class="seclabel">Active listings — ranked by score</span>
+  <span class="seclabel">Active listings — by model year, newest first</span>
   <div class="cars" id="cars" role="list"></div>
   <div class="detail" id="detail" aria-live="polite"></div>
 
@@ -231,14 +237,39 @@ footer{margin-top:56px;font-family:var(--mono);font-size:11.5px;color:var(--ink-
   }
 
   function renderCars(){
-    var vs=D.searches[current].vehicles;
+    var all=D.searches[current].vehicles.filter(function(v){return v.status==='ACTIVE';});
     var el=document.getElementById('cars'); el.innerHTML='';
-    if(!vs.length){
+    if(!all.length){
       var noun=(D.searches[current].kind==='vehicle')?'vehicles':'units';
-      el.innerHTML='<div class="empty"><b>No '+noun+' observed yet</b>Add source API keys or log a find in reports/manual_listings.csv — the next hunt fills this in.</div>';
+      el.innerHTML='<div class="empty"><b>No active '+noun+'</b>Sold and delisted entries live in the alert log below; new finds appear here after each hunt.</div>';
       return;
     }
-    vs.forEach(function(v){
+    var isVehicle=(D.searches[current].kind==='vehicle');
+    var years=[];
+    all.forEach(function(v){ var y=isVehicle?(v.year||'Unknown year'):'__all__'; if(years.indexOf(y)<0) years.push(y); });
+    years.sort(function(a,b){ return (b==='Unknown year'?-1:b)-(a==='Unknown year'?-1:a) || 0; });
+    years.forEach(function(y){
+      var group=all.filter(function(v){ return (isVehicle?(v.year||'Unknown year'):'__all__')===y; });
+      if(y!=='__all__' && isVehicle){
+        var yh=document.createElement('div'); yh.className='yearhead';
+        yh.textContent=y+' — '+group.length+' active'; el.appendChild(yh);
+      }
+      var dates=[];
+      group.forEach(function(v){ var d=v.first_seen||'unknown'; if(dates.indexOf(d)<0) dates.push(d); });
+      dates.sort().reverse();
+      var newest=dates[0];
+      dates.forEach(function(d){
+        var dh=document.createElement('div'); dh.className='datehead';
+        dh.innerHTML='First seen <b>'+esc(d)+'</b>'+(d===newest?' — newest batch':'');
+        el.appendChild(dh);
+        group.filter(function(v){ return (v.first_seen||'unknown')===d; })
+             .sort(function(a,b){ return (b.score||0)-(a.score||0); })
+             .forEach(function(v){ el.appendChild(carRow(v)); });
+      });
+    });
+  }
+
+  function carRow(v){
       var b=document.createElement('div');
       b.className='car'; b.setAttribute('role','listitem'); b.tabIndex=0;
       b.setAttribute('aria-expanded', v.key===openKey?'true':'false');
@@ -252,12 +283,11 @@ footer{margin-top:56px;font-family:var(--mono);font-size:11.5px;color:var(--ink-
         '<div class="vin">'+esc(v.vin||(D.searches[current].kind==='vehicle'?'VIN pending':''))+'</div>'+
         '<div class="carmeta"><b>'+fmt$(v.price)+'</b>'+(v.mileage!=null?' · '+fmtN(v.mileage)+' mi':'')+' · listed '+esc(v.first_seen)+'</div>'+
         '<div class="dealer">'+esc(v.dealer)+'</div></div>'+
-        '<div class="rowactions"><span class="rec '+recClass(v)+'">'+esc(v.status==='ACTIVE'?(v.recommendation||'—'):v.status)+'</span>'+link+'</div>';
+        '<div class="rowactions"><span class="rec '+recClass(v)+'">'+esc(v.recommendation||'—')+'</span>'+link+'</div>';
       var toggle=function(){ openKey = (openKey===v.key? null : v.key); render(); };
       b.onclick=toggle;
       b.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } };
-      el.appendChild(b);
-    });
+      return b;
   }
 
   function renderAlerts(){
